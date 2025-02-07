@@ -35,11 +35,11 @@ class NovelSpider(scrapy.Spider):
 
     def parse(self, response, **kwargs):
         tree = etree.HTML(response.text)
-        for novel_name in ['七夜怪谈', '复活之路', '永生不死', '贞相大白']:
-            element = tree.xpath(f"//a[text()='{novel_name}']")[0]
-            novel_url = init_url + element.get('href')
+        a_list = tree.xpath("//table/tr/td/span/a")
+        for a in a_list:
+            novel_url = init_url + a.get('href')
             yield scrapy.Request(novel_url, callback=self.parse_chapter,
-                                 meta={'novel': novel_name})
+                                 meta={'novel': a.text})
 
     def parse_chapter(self, response):
         novel_name = response.meta.get('novel')
@@ -49,13 +49,15 @@ class NovelSpider(scrapy.Spider):
             content_url = base_url + a.get('href')
             print(f'content_url={content_url}')
             yield scrapy.Request(content_url, callback=self.parse_chapter_content,
-                                 meta={'title': novel_name + '#' + a.get('title')})
+                                 meta={'novel': novel_name, 'chapter': a.get('title')})
 
     def parse_chapter_content(self, response):
-        title = response.meta.get('title')
+        novel_name = response.meta.get('novel')
+        chapter = response.meta.get('chapter')
         tree = etree.HTML(response.text)
         content = ''.join(tree.xpath("//div[@id='div_content' and @class='articleContent']/span//text()")).strip()
         yield {
-            'title': title,
+            'novel': novel_name,
+            'chapter': chapter,
             'content': content
         }

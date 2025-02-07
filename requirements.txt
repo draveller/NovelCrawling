@@ -5,3 +5,4 @@ undetected-chromedriver~=3.5.5
 BeautifulSoup4~=4.13.3
 typing_extensions~=4.12.2
 lxml~=5.3.0
+EbookLib~=0.18
