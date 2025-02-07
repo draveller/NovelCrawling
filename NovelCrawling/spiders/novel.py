@@ -1,5 +1,12 @@
+import os.path
+from urllib.parse import urljoin
+
 import scrapy
 from lxml import etree
+from scrapy import signals
+
+from NovelCrawling.util import jsonl_parser
+from config.const import ROOT_PATH
 
 base_url = 'https://m.gulongbbs.com/'
 init_url = base_url + 'zhentan/lmgs/'
@@ -61,3 +68,17 @@ class NovelSpider(scrapy.Spider):
             'chapter': chapter,
             'content': content
         }
+
+    @classmethod
+    def from_crawler(cls, crawler, *args, **kwargs):
+        spider = super(NovelSpider, cls).from_crawler(crawler, *args, **kwargs)
+        # 注册 spider_closed 信号
+        crawler.signals.connect(spider.on_closed, signal=signals.spider_closed)
+        return spider
+
+    def on_closed(self, spider):
+        # 爬虫关闭时执行的操作
+        jsonl_parser.process_jsonl_to_txt(
+            jsonl_file_path=os.path.join(ROOT_PATH, 'novel.jsonl'),
+            output_directory=os.path.join(ROOT_PATH, 'novel_output')
+        )
