@@ -1,5 +1,5 @@
 import os.path
-from urllib.parse import urljoin
+import subprocess
 
 import scrapy
 from lxml import etree
@@ -71,14 +71,20 @@ class NovelSpider(scrapy.Spider):
 
     @classmethod
     def from_crawler(cls, crawler, *args, **kwargs):
+        # 创建spider实例
         spider = super(NovelSpider, cls).from_crawler(crawler, *args, **kwargs)
-        # 注册 spider_closed 信号
-        crawler.signals.connect(spider.on_closed, signal=signals.spider_closed)
+        # 注册spider_closed信号到类方法
+        crawler.signals.connect(cls.on_closed, signal=signals.spider_closed)
         return spider
 
-    def on_closed(self, spider):
-        # 爬虫关闭时执行的操作
+    @classmethod
+    def on_closed(cls, spider):
+        """
+        爬虫关闭时执行的操作。
+        注意: 因为这是一个类方法，'cls' 指向的是类本身，而非实例。
+        """
+        # 假设jsonl_parser和ROOT_PATH已经定义
         jsonl_parser.process_jsonl_to_txt(
-            jsonl_file_path=os.path.join(ROOT_PATH, 'novel.jsonl'),
-            output_directory=os.path.join(ROOT_PATH, 'novel_output')
+            jsonl_file_path=os.path.join(ROOT_PATH, 'output', 'novel.jsonl'),
+            output_directory=os.path.join(ROOT_PATH, 'output')
         )
